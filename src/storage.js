@@ -10,10 +10,10 @@ export const NOTES_KEY = 'habit-notes';
 export const HABITS_KEY = 'habits';
 
 export const DEFAULT_HABITS = [
-  { id: 'bath', name: 'Bath' },
-  { id: 'brush', name: 'Brush' },
   { id: 'meditation', name: 'Meditate (2–3 min)' },
   { id: 'pushup', name: 'At least 1 push-up' },
+  { id: 'brush', name: 'Brush' },
+  { id: 'bath', name: 'Bath' },
   { id: 'screen_free', name: 'Off Instagram / YouTube' },
 ];
 
