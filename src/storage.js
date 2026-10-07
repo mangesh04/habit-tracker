@@ -91,7 +91,7 @@ export function formatTime(iso) {
 }
 
 export function emptyEntry(wakeTime) {
-  return { wakeTime, habits: {}, journal: '' };
+  return { wakeTime, habits: {} };
 }
 
 export function dateKeysBack(count, end = new Date()) {

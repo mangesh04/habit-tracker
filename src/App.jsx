@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import {
-  loadLog, saveLog, loadNotes, saveNotes, loadHabits, saveHabits,
+  loadLog, saveLog, loadHabits, saveHabits,
   loadLists, saveLists,
   todayKey, emptyEntry, DEFAULT_HABITS,
 } from './storage';
@@ -10,19 +10,17 @@ import WakeAverage from './WakeAverage';
 import HabitGrid from './HabitGrid';
 import Lists from './Lists';
 import Journal from './Journal';
-import NotesPanel from './NotesPanel';
 
 export default function App() {
   const [log, setLog] = useState(null);
   const [habits, setHabits] = useState(null);
   const [lists, setLists] = useState(null);
-  const [notes, setNotes] = useState('');
   const key = todayKey();
 
   useEffect(() => {
     (async () => {
-      const [l, h, n, li] = await Promise.all([
-        loadLog(), loadHabits(), loadNotes(), loadLists(),
+      const [l, h, li] = await Promise.all([
+        loadLog(), loadHabits(), loadLists(),
       ]);
       const habitsList = h && h.length ? h : DEFAULT_HABITS;
       if (!h) await saveHabits(habitsList);
@@ -32,7 +30,6 @@ export default function App() {
       }
       setLog(l);
       setHabits(habitsList);
-      setNotes(n);
       setLists(li);
     })();
   }, []);
@@ -58,10 +55,25 @@ export default function App() {
     });
   }
 
+  // Saves the journal for a date. If the text is empty, nothing is kept:
+  // the journal field is removed, and if the day has no other data
+  // (no wake time, no habits ticked), the whole day entry is removed.
   function saveJournal(dateKey, text) {
     setLog((prev) => {
-      const entry = prev[dateKey] || emptyEntry(null);
-      const next = { ...prev, [dateKey]: { ...entry, journal: text } };
+      const entry = prev[dateKey];
+      let next;
+      if (text.trim()) {
+        const base = entry || emptyEntry(null);
+        next = { ...prev, [dateKey]: { ...base, journal: text } };
+      } else {
+        if (!entry || !entry.journal) return prev; // nothing to change
+        const { journal, ...rest } = entry;
+        const hasOtherData =
+          rest.wakeTime || Object.values(rest.habits || {}).some(Boolean);
+        next = { ...prev };
+        if (hasOtherData) next[dateKey] = rest;
+        else delete next[dateKey];
+      }
       saveLog(next);
       return next;
     });
@@ -117,11 +129,6 @@ export default function App() {
     updateLists((prev) => ({ ...prev, todo: prev.todo.filter((t) => !t.done) }));
   }
 
-  function handleNotesChange(text) {
-    setNotes(text);
-    saveNotes(text);
-  }
-
   if (!log || !habits || !lists) {
     return (
       <div className="flex min-h-screen items-center justify-center bg-stone-50 text-stone-400">
@@ -142,6 +149,15 @@ export default function App() {
           </p>
         </header>
 
+        <Lists
+          kind="todo"
+          lists={lists}
+          onAdd={addListItem}
+          onToggle={toggleTodo}
+          onRemove={removeListItem}
+          onClearDone={clearDoneTodos}
+        />
+
         <div className="border-b border-stone-300 pb-5">
           <p className="mb-3 text-sm text-stone-500">Sleep</p>
           <WakeTracker wakeTime={today.wakeTime} onChange={(t) => updateToday({ wakeTime: t })} />
@@ -159,17 +175,14 @@ export default function App() {
           onRemoveHabit={removeHabit}
         />
 
-        <Lists
-          lists={lists}
-          onAdd={addListItem}
-          onToggle={toggleTodo}
-          onRemove={removeListItem}
-          onClearDone={clearDoneTodos}
-        />
-
         <Journal log={log} onSave={saveJournal} />
 
-        <NotesPanel notes={notes} onChange={handleNotesChange} />
+        <Lists
+          kind="ideas"
+          lists={lists}
+          onAdd={addListItem}
+          onRemove={removeListItem}
+        />
       </div>
     </div>
   );

@@ -79,20 +79,29 @@ function ListSection({ title, hint, items, checkable, placeholder, onAdd, onTogg
   );
 }
 
-export default function Lists({ lists, onAdd, onToggle, onRemove, onClearDone }) {
+// kind="todo" goes at the top of the page, kind="ideas" at the very bottom.
+// Both lists are permanent: they are not tied to any date.
+export default function Lists({ kind, lists, onAdd, onToggle, onRemove, onClearDone }) {
+  if (kind === 'todo') {
+    return (
+      <div className="mb-5 border-b border-stone-300 pb-5">
+        <ListSection
+          title="I have to do"
+          hint="Things that actually need doing."
+          items={lists.todo}
+          checkable
+          placeholder="Add something to do"
+          onAdd={(t) => onAdd('todo', t)}
+          onToggle={onToggle}
+          onRemove={(id) => onRemove('todo', id)}
+          onClearDone={onClearDone}
+        />
+      </div>
+    );
+  }
+
   return (
-    <div className="space-y-8 border-t border-stone-300 py-5">
-      <ListSection
-        title="I have to do"
-        hint="Things that actually need doing."
-        items={lists.todo}
-        checkable
-        placeholder="Add something to do"
-        onAdd={(t) => onAdd('todo', t)}
-        onToggle={onToggle}
-        onRemove={(id) => onRemove('todo', id)}
-        onClearDone={onClearDone}
-      />
+    <div className="border-t border-stone-300 py-5">
       <ListSection
         title="I can do"
         hint="Look here instead of getting carried away."
