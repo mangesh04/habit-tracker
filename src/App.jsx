@@ -111,22 +111,11 @@ export default function App() {
     }));
   }
 
-  function toggleTodo(id) {
-    updateLists((prev) => ({
-      ...prev,
-      todo: prev.todo.map((t) => (t.id === id ? { ...t, done: !t.done } : t)),
-    }));
-  }
-
   function removeListItem(listName, id) {
     updateLists((prev) => ({
       ...prev,
       [listName]: prev[listName].filter((t) => t.id !== id),
     }));
-  }
-
-  function clearDoneTodos() {
-    updateLists((prev) => ({ ...prev, todo: prev.todo.filter((t) => !t.done) }));
   }
 
   if (!log || !habits || !lists) {
@@ -149,14 +138,7 @@ export default function App() {
           </p>
         </header>
 
-        <Lists
-          kind="todo"
-          lists={lists}
-          onAdd={addListItem}
-          onToggle={toggleTodo}
-          onRemove={removeListItem}
-          onClearDone={clearDoneTodos}
-        />
+        <Journal log={log} onSave={saveJournal} />
 
         <div className="border-b border-stone-300 pb-5">
           <p className="mb-3 text-sm text-stone-500">Sleep</p>
@@ -175,7 +157,12 @@ export default function App() {
           onRemoveHabit={removeHabit}
         />
 
-        <Journal log={log} onSave={saveJournal} />
+        <Lists
+          kind="todo"
+          lists={lists}
+          onAdd={addListItem}
+          onRemove={removeListItem}
+        />
 
         <Lists
           kind="ideas"

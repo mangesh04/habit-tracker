@@ -119,7 +119,7 @@ export default function Journal({ log, onSave }) {
         });
 
   return (
-    <div className="border-t border-stone-300 py-5">
+    <div className="mb-5 border-b border-stone-300 pb-5">
       <div className="mb-3 flex items-center justify-between">
         <div className="flex items-center gap-3">
           <p className="text-sm text-stone-500">Journal</p>

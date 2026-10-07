@@ -44,7 +44,7 @@ function ListSection({ title, hint, items, checkable, placeholder, onAdd, onTogg
             {!checkable && <span className="text-stone-400">·</span>}
             <span
               className={`flex-1 text-sm ${
-                item.done ? 'text-stone-400 line-through' : 'text-stone-800'
+                checkable && item.done ? 'text-stone-400 line-through' : 'text-stone-800'
               }`}
             >
               {item.text}
@@ -79,22 +79,19 @@ function ListSection({ title, hint, items, checkable, placeholder, onAdd, onTogg
   );
 }
 
-// kind="todo" goes at the top of the page, kind="ideas" at the very bottom.
+// Two plain lists near the bottom of the page: "todo" then "ideas".
 // Both lists are permanent: they are not tied to any date.
-export default function Lists({ kind, lists, onAdd, onToggle, onRemove, onClearDone }) {
+export default function Lists({ kind, lists, onAdd, onRemove }) {
   if (kind === 'todo') {
     return (
-      <div className="mb-5 border-b border-stone-300 pb-5">
+      <div className="border-t border-stone-300 py-5">
         <ListSection
           title="I have to do"
           hint="Things that actually need doing."
           items={lists.todo}
-          checkable
           placeholder="Add something to do"
           onAdd={(t) => onAdd('todo', t)}
-          onToggle={onToggle}
           onRemove={(id) => onRemove('todo', id)}
-          onClearDone={onClearDone}
         />
       </div>
     );
