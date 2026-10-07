@@ -8,6 +8,7 @@ const supabase = createClient(
 export const LOG_KEY = 'habit-log';
 export const NOTES_KEY = 'habit-notes';
 export const HABITS_KEY = 'habits';
+export const LISTS_KEY = 'lists';
 
 export const DEFAULT_HABITS = [
   { id: 'meditation', name: 'Meditate (2–3 min)' },
@@ -63,6 +64,19 @@ export async function saveNotes(text) {
   await setValue(NOTES_KEY, text);
 }
 
+// Lists: { todo: [{id, text, done}], ideas: [{id, text}] }
+export async function loadLists() {
+  const v = await getValue(LISTS_KEY);
+  return {
+    todo: Array.isArray(v?.todo) ? v.todo : [],
+    ideas: Array.isArray(v?.ideas) ? v.ideas : [],
+  };
+}
+
+export async function saveLists(lists) {
+  await setValue(LISTS_KEY, lists);
+}
+
 export function todayKey(d = new Date()) {
   const y = d.getFullYear();
   const m = String(d.getMonth() + 1).padStart(2, '0');
@@ -77,7 +91,7 @@ export function formatTime(iso) {
 }
 
 export function emptyEntry(wakeTime) {
-  return { wakeTime, habits: {} };
+  return { wakeTime, habits: {}, journal: '' };
 }
 
 export function dateKeysBack(count, end = new Date()) {
@@ -106,4 +120,31 @@ export function habitStreak(log, habitId, end = new Date()) {
     d.setDate(d.getDate() - 1);
   }
   return streak;
+}
+
+// ---- wake time helpers ----
+
+export function wakeMinutes(iso) {
+  if (!iso) return null;
+  const d = new Date(iso);
+  return d.getHours() * 60 + d.getMinutes();
+}
+
+export function minutesToLabel(mins) {
+  const h = Math.floor(mins / 60);
+  const m = Math.round(mins % 60);
+  const period = h >= 12 ? 'PM' : 'AM';
+  const h12 = h % 12 === 0 ? 12 : h % 12;
+  return `${h12}:${String(m).padStart(2, '0')} ${period}`;
+}
+
+// Average wake time over the last `days` days (only days that have a wake time).
+// Returns { avg (minutes since midnight), count } or null.
+export function averageWakeMinutes(log, days) {
+  const mins = dateKeysBack(days)
+    .map((k) => wakeMinutes(log[k]?.wakeTime))
+    .filter((m) => m !== null);
+  if (!mins.length) return null;
+  const avg = Math.round(mins.reduce((a, b) => a + b, 0) / mins.length);
+  return { avg, count: mins.length };
 }

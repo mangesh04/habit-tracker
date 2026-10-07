@@ -1,22 +1,29 @@
 import { useEffect, useState } from 'react';
 import {
   loadLog, saveLog, loadNotes, saveNotes, loadHabits, saveHabits,
+  loadLists, saveLists,
   todayKey, emptyEntry, DEFAULT_HABITS,
 } from './storage';
 import WakeTracker from './WakeTracker';
 import WakeChart from './WakeChart';
+import WakeAverage from './WakeAverage';
 import HabitGrid from './HabitGrid';
+import Lists from './Lists';
+import Journal from './Journal';
 import NotesPanel from './NotesPanel';
 
 export default function App() {
   const [log, setLog] = useState(null);
   const [habits, setHabits] = useState(null);
+  const [lists, setLists] = useState(null);
   const [notes, setNotes] = useState('');
   const key = todayKey();
 
   useEffect(() => {
     (async () => {
-      const [l, h, n] = await Promise.all([loadLog(), loadHabits(), loadNotes()]);
+      const [l, h, n, li] = await Promise.all([
+        loadLog(), loadHabits(), loadNotes(), loadLists(),
+      ]);
       const habitsList = h && h.length ? h : DEFAULT_HABITS;
       if (!h) await saveHabits(habitsList);
       if (!l[key]) {
@@ -26,6 +33,7 @@ export default function App() {
       setLog(l);
       setHabits(habitsList);
       setNotes(n);
+      setLists(li);
     })();
   }, []);
 
@@ -50,6 +58,15 @@ export default function App() {
     });
   }
 
+  function saveJournal(dateKey, text) {
+    setLog((prev) => {
+      const entry = prev[dateKey] || emptyEntry(null);
+      const next = { ...prev, [dateKey]: { ...entry, journal: text } };
+      saveLog(next);
+      return next;
+    });
+  }
+
   function addHabit(name) {
     setHabits((prev) => {
       const next = [...prev, { id: `${Date.now()}`, name }];
@@ -66,12 +83,46 @@ export default function App() {
     });
   }
 
+  // ---- lists ----
+  function updateLists(updater) {
+    setLists((prev) => {
+      const next = updater(prev);
+      saveLists(next);
+      return next;
+    });
+  }
+
+  function addListItem(listName, text) {
+    updateLists((prev) => ({
+      ...prev,
+      [listName]: [...prev[listName], { id: `${Date.now()}`, text, done: false }],
+    }));
+  }
+
+  function toggleTodo(id) {
+    updateLists((prev) => ({
+      ...prev,
+      todo: prev.todo.map((t) => (t.id === id ? { ...t, done: !t.done } : t)),
+    }));
+  }
+
+  function removeListItem(listName, id) {
+    updateLists((prev) => ({
+      ...prev,
+      [listName]: prev[listName].filter((t) => t.id !== id),
+    }));
+  }
+
+  function clearDoneTodos() {
+    updateLists((prev) => ({ ...prev, todo: prev.todo.filter((t) => !t.done) }));
+  }
+
   function handleNotesChange(text) {
     setNotes(text);
     saveNotes(text);
   }
 
-  if (!log || !habits) {
+  if (!log || !habits || !lists) {
     return (
       <div className="flex min-h-screen items-center justify-center bg-stone-50 text-stone-400">
         Loading…
@@ -94,6 +145,7 @@ export default function App() {
         <div className="border-b border-stone-300 pb-5">
           <p className="mb-3 text-sm text-stone-500">Sleep</p>
           <WakeTracker wakeTime={today.wakeTime} onChange={(t) => updateToday({ wakeTime: t })} />
+          <WakeAverage log={log} />
           <div className="mt-4">
             <WakeChart log={log} />
           </div>
@@ -106,6 +158,16 @@ export default function App() {
           onAddHabit={addHabit}
           onRemoveHabit={removeHabit}
         />
+
+        <Lists
+          lists={lists}
+          onAdd={addListItem}
+          onToggle={toggleTodo}
+          onRemove={removeListItem}
+          onClearDone={clearDoneTodos}
+        />
+
+        <Journal log={log} onSave={saveJournal} />
 
         <NotesPanel notes={notes} onChange={handleNotesChange} />
       </div>
