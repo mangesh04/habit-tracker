@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import {
   loadLog, saveLog, loadHabits, saveHabits,
   loadLists, saveLists,
+  loadShortcuts, saveShortcuts,
   todayKey, emptyEntry, DEFAULT_HABITS,
 } from './storage';
 import WakeTracker from './WakeTracker';
@@ -10,17 +11,19 @@ import WakeAverage from './WakeAverage';
 import HabitGrid from './HabitGrid';
 import Lists from './Lists';
 import Journal from './Journal';
+import Shortcuts from './Shortcuts';
 
 export default function App() {
   const [log, setLog] = useState(null);
   const [habits, setHabits] = useState(null);
   const [lists, setLists] = useState(null);
+  const [shortcuts, setShortcuts] = useState(null);
   const key = todayKey();
 
   useEffect(() => {
     (async () => {
-      const [l, h, li] = await Promise.all([
-        loadLog(), loadHabits(), loadLists(),
+      const [l, h, li, sc] = await Promise.all([
+        loadLog(), loadHabits(), loadLists(), loadShortcuts(),
       ]);
       const habitsList = h && h.length ? h : DEFAULT_HABITS;
       if (!h) await saveHabits(habitsList);
@@ -31,6 +34,7 @@ export default function App() {
       setLog(l);
       setHabits(habitsList);
       setLists(li);
+      setShortcuts(sc);
     })();
   }, []);
 
@@ -95,6 +99,23 @@ export default function App() {
     });
   }
 
+  // ---- shortcuts ----
+  function addShortcut(name, url) {
+    setShortcuts((prev) => {
+      const next = [...prev, { id: `${Date.now()}`, name, url }];
+      saveShortcuts(next);
+      return next;
+    });
+  }
+
+  function removeShortcut(id) {
+    setShortcuts((prev) => {
+      const next = prev.filter((s) => s.id !== id);
+      saveShortcuts(next);
+      return next;
+    });
+  }
+
   // ---- lists ----
   function updateLists(updater) {
     setLists((prev) => {
@@ -118,7 +139,7 @@ export default function App() {
     }));
   }
 
-  if (!log || !habits || !lists) {
+  if (!log || !habits || !lists || !shortcuts) {
     return (
       <div className="flex min-h-screen items-center justify-center bg-stone-50 text-stone-400">
         Loading…
@@ -137,6 +158,12 @@ export default function App() {
             {new Date().toLocaleDateString(undefined, { weekday: 'long', month: 'long', day: 'numeric' })}
           </p>
         </header>
+
+        <Shortcuts
+          shortcuts={shortcuts}
+          onAdd={addShortcut}
+          onRemove={removeShortcut}
+        />
 
         <Journal log={log} onSave={saveJournal} />
 

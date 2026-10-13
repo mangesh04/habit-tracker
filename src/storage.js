@@ -9,6 +9,7 @@ export const LOG_KEY = 'habit-log';
 export const NOTES_KEY = 'habit-notes';
 export const HABITS_KEY = 'habits';
 export const LISTS_KEY = 'lists';
+export const SHORTCUTS_KEY = 'shortcuts';
 
 export const DEFAULT_HABITS = [
   { id: 'meditation', name: 'Meditate (2–3 min)' },
@@ -16,6 +17,13 @@ export const DEFAULT_HABITS = [
   { id: 'brush', name: 'Brush' },
   { id: 'bath', name: 'Bath' },
   { id: 'screen_free', name: 'Off Instagram / YouTube' },
+];
+
+export const DEFAULT_SHORTCUTS = [
+  { id: 'reddit', name: 'reddit', url: 'https://reddit.com' },
+  { id: 'youtube', name: 'youtube', url: 'https://youtube.com' },
+  { id: 'gmail', name: 'gmail', url: 'https://mail.google.com' },
+  { id: 'github', name: 'github', url: 'https://github.com' },
 ];
 
 async function getValue(key) {
@@ -75,6 +83,16 @@ export async function loadLists() {
 
 export async function saveLists(lists) {
   await setValue(LISTS_KEY, lists);
+}
+
+// Shortcuts: [{ id, name, url }]
+export async function loadShortcuts() {
+  const v = await getValue(SHORTCUTS_KEY);
+  return Array.isArray(v) ? v : DEFAULT_SHORTCUTS;
+}
+
+export async function saveShortcuts(shortcuts) {
+  await setValue(SHORTCUTS_KEY, shortcuts);
 }
 
 export function todayKey(d = new Date()) {
