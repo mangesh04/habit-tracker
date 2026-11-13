@@ -1,10 +1,17 @@
 import { useEffect, useState } from 'react';
+
 import {
   loadLog, saveLog, loadHabits, saveHabits,
   loadLists, saveLists,
   loadShortcuts, saveShortcuts,
   todayKey, emptyEntry, DEFAULT_HABITS,
+  loadBestStreaks, saveBestStreaks, longestStreak,
 } from './storage';
+
+
+
+import BestStreaks from './BestStreaks';
+
 import WakeTracker from './WakeTracker';
 import WakeChart from './WakeChart';
 import WakeAverage from './WakeAverage';
@@ -13,6 +20,8 @@ import Lists from './Lists';
 import Journal from './Journal';
 import Shortcuts from './Shortcuts';
 
+
+
 export default function App() {
   const [log, setLog] = useState(null);
   const [habits, setHabits] = useState(null);
@@ -20,11 +29,18 @@ export default function App() {
   const [shortcuts, setShortcuts] = useState(null);
   const key = todayKey();
 
+  const [bests, setBests] = useState(null);
+
+
+
   useEffect(() => {
+
     (async () => {
-      const [l, h, li, sc] = await Promise.all([
-        loadLog(), loadHabits(), loadLists(), loadShortcuts(),
+      const [l, h, li, sc, bs] = await Promise.all([
+        loadLog(), loadHabits(), loadLists(), loadShortcuts(), loadBestStreaks(),
       ]);
+
+
       const habitsList = h && h.length ? h : DEFAULT_HABITS;
       if (!h) await saveHabits(habitsList);
       if (!l[key]) {
@@ -35,8 +51,33 @@ export default function App() {
       setHabits(habitsList);
       setLists(li);
       setShortcuts(sc);
+      setBests(bs);
     })();
   }, []);
+
+  useEffect(() => {
+    if (!log || !habits || !bests) return;
+    const next = { ...bests };
+    const toSave = [];
+    for (const h of habits) {
+      const c = longestStreak(log, h.id);
+      if (c.length > (bests[h.id]?.best_streak || 0)) {
+        const row = {
+          habit_id: h.id,
+          habit_name: h.name,
+          best_streak: c.length,
+          start_date: c.start,
+          end_date: c.end,
+        };
+        next[h.id] = row;
+        toSave.push(row);
+      }
+    }
+    if (toSave.length) {
+      setBests(next);
+      saveBestStreaks(toSave);
+    }
+  }, [log, habits, bests]);
 
   function updateToday(patch) {
     setLog((prev) => {
@@ -139,7 +180,7 @@ export default function App() {
     }));
   }
 
-  if (!log || !habits || !lists || !shortcuts) {
+  if (!log || !habits || !lists || !shortcuts || !bests) {
     return (
       <div className="flex min-h-screen items-center justify-center bg-stone-50 text-stone-400">
         Loading…
@@ -147,6 +188,9 @@ export default function App() {
     );
   }
 
+
+  // in the JSX, right after </header>
+  <BestStreaks bests={bests} log={log} />
   const today = log[key];
 
   return (

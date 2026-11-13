@@ -166,3 +166,42 @@ export function averageWakeMinutes(log, days) {
   const avg = Math.round(mins.reduce((a, b) => a + b, 0) / mins.length);
   return { avg, count: mins.length };
 }
+
+
+function daysBetween(a, b) {
+  const da = new Date(a + 'T00:00:00');
+  const db = new Date(b + 'T00:00:00');
+  return Math.round((db - da) / 86400000);
+}
+
+// Longest run of consecutive days a habit was ticked, anywhere in the log.
+export function longestStreak(log, habitId) {
+  const keys = Object.keys(log)
+    .filter((k) => log[k]?.habits?.[habitId])
+    .sort();
+  let best = { length: 0, start: null, end: null };
+  let len = 0, start = null, prev = null;
+  for (const k of keys) {
+    if (prev && daysBetween(prev, k) === 1) len += 1;
+    else { len = 1; start = k; }
+    if (len > best.length) best = { length: len, start, end: k };
+    prev = k;
+  }
+  return best;
+}
+
+export async function loadBestStreaks() {
+  const { data, error } = await supabase.from('habit_best_streaks').select('*');
+  if (error) {
+    console.error('Failed to load best streaks', error);
+    return {};
+  }
+  return Object.fromEntries(data.map((r) => [r.habit_id, r]));
+}
+
+export async function saveBestStreaks(rows) {
+  const { error } = await supabase
+    .from('habit_best_streaks')
+    .upsert(rows.map((r) => ({ ...r, updated_at: new Date().toISOString() })));
+  if (error) console.error('Failed to save best streaks', error);
+}
