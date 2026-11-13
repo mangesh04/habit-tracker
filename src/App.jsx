@@ -194,6 +194,7 @@ export default function App() {
   return (
     <div className="min-h-screen bg-stone-50 px-4 py-10 text-stone-800">
       <div className="mx-auto max-w-2xl">
+
         <header className="mb-6">
           <h1 className="font-serif text-2xl text-stone-800">Daily habits</h1>
           <p className="text-sm text-stone-500">
@@ -211,14 +212,14 @@ export default function App() {
 
         <Journal log={log} onSave={saveJournal} />
 
-        <div className="border-b border-stone-300 pb-5">
+        {/* <div className="border-b border-stone-300 pb-5">
           <p className="mb-3 text-sm text-stone-500">Sleep</p>
           <WakeTracker wakeTime={today.wakeTime} onChange={(t) => updateToday({ wakeTime: t })} />
           <WakeAverage log={log} />
           <div className="mt-4">
             <WakeChart log={log} />
           </div>
-        </div>
+        </div> */}
 
         <HabitGrid
           log={log}
