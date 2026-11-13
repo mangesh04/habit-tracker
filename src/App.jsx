@@ -189,8 +189,6 @@ export default function App() {
   }
 
 
-  // in the JSX, right after </header>
-  <BestStreaks bests={bests} log={log} />
   const today = log[key];
 
   return (
@@ -202,6 +200,8 @@ export default function App() {
             {new Date().toLocaleDateString(undefined, { weekday: 'long', month: 'long', day: 'numeric' })}
           </p>
         </header>
+
+        <BestStreaks bests={bests} log={log} />
 
         <Shortcuts
           shortcuts={shortcuts}
@@ -242,6 +242,6 @@ export default function App() {
           onRemove={removeListItem}
         />
       </div>
-    </div>
+    </div >
   );
 }
