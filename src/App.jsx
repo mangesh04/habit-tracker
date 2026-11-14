@@ -19,7 +19,7 @@ import HabitGrid from './HabitGrid';
 import Lists from './Lists';
 import Journal from './Journal';
 import Shortcuts from './Shortcuts';
-
+import ContestsPanel from './ContestsPanel';
 
 
 export default function App() {
@@ -224,6 +224,8 @@ export default function App() {
 
         <BestStreaks bests={bests} log={log} />
 
+        <ContestsPanel />
+
         <Shortcuts
           shortcuts={shortcuts}
           onAdd={addShortcut}
@@ -249,6 +251,7 @@ export default function App() {
           onRemoveHabit={removeHabit}
           onReorderHabit={reorderHabit}
         />
+
 
         <Lists
           kind="todo"

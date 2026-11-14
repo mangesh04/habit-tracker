@@ -35,7 +35,7 @@ export default function HabitGrid({
   }
 
   return (
-    <div className="border-t border-stone-300 py-5">
+    <div className=" border-stone-300 py-5">
       <div className="mb-3 flex items-center justify-between">
         <p className="text-sm text-stone-500">Habits</p>
         <div className="flex items-center gap-4">
