@@ -3,15 +3,29 @@ import { dateKeysBack, shortLabel, habitStreak, todayKey } from './storage';
 
 const WINDOW_SIZE = 10;
 
-export default function HabitGrid({ log, habits, onToggleCell, onAddHabit, onRemoveHabit }) {
+export default function HabitGrid({
+  log,
+  habits,
+  onToggleCell,
+  onAddHabit,
+  onRemoveHabit,
+  onReorderHabit,
+}) {
   const [offset, setOffset] = useState(0);
   const [newHabit, setNewHabit] = useState('');
   const [editing, setEditing] = useState(false);
+  const [dragIndex, setDragIndex] = useState(null);
+  const [overIndex, setOverIndex] = useState(null);
 
   const end = new Date();
   end.setDate(end.getDate() - offset);
   const keys = dateKeysBack(WINDOW_SIZE, end);
   const today = todayKey();
+
+  function resetDrag() {
+    setDragIndex(null);
+    setOverIndex(null);
+  }
 
   function submitHabit(e) {
     e.preventDefault();
@@ -49,9 +63,8 @@ export default function HabitGrid({ log, habits, onToggleCell, onAddHabit, onRem
               {keys.map((k) => (
                 <th
                   key={k}
-                  className={`w-7 px-0.5 pb-1 text-center text-xs font-normal ${
-                    k === today ? 'text-amber-700' : 'text-stone-400'
-                  }`}
+                  className={`w-7 px-0.5 pb-1 text-center text-xs font-normal ${k === today ? 'text-amber-700' : 'text-stone-400'
+                    }`}
                 >
                   {shortLabel(k)}
                 </th>
@@ -60,12 +73,39 @@ export default function HabitGrid({ log, habits, onToggleCell, onAddHabit, onRem
             </tr>
           </thead>
           <tbody>
-            {habits.map((h) => {
+            {habits.map((h, index) => {
               const streak = habitStreak(log, h.id);
+              const isOver =
+                overIndex === index && dragIndex !== null && dragIndex !== index;
               return (
-                <tr key={h.id}>
-                  <td className="sticky left-0 z-10 whitespace-nowrap bg-stone-50 py-1.5 pr-3 text-sm text-stone-800">
+                <tr
+                  key={h.id}
+                  draggable
+                  onDragStart={(e) => {
+                    e.dataTransfer.effectAllowed = 'move';
+                    e.dataTransfer.setData('text/plain', String(index));
+                    setDragIndex(index);
+                  }}
+                  onDragOver={(e) => {
+                    e.preventDefault();
+                    if (overIndex !== index) setOverIndex(index);
+                  }}
+                  onDrop={(e) => {
+                    e.preventDefault();
+                    if (dragIndex !== null && dragIndex !== index) {
+                      onReorderHabit(dragIndex, index);
+                    }
+                    resetDrag();
+                  }}
+                  onDragEnd={resetDrag}
+                  className={dragIndex === index ? 'opacity-40' : ''}
+                >
+                  <td
+                    className={`sticky left-0 z-10 cursor-grab whitespace-nowrap border-t-2 py-1.5 pr-3 text-sm text-stone-800 ${isOver ? 'border-amber-600 bg-amber-50' : 'border-transparent bg-stone-50'
+                      }`}
+                  >
                     <div className="flex items-center gap-1.5">
+                      <span className="w-4 text-right text-xs text-stone-400">{index + 1}.</span>
                       <span>{h.name}</span>
                       {editing && (
                         <button
@@ -80,17 +120,25 @@ export default function HabitGrid({ log, habits, onToggleCell, onAddHabit, onRem
                   {keys.map((k) => {
                     const checked = !!log[k]?.habits?.[h.id];
                     return (
-                      <td key={k} className="px-0.5 py-1.5 text-center">
+                      <td
+                        key={k}
+                        className={`border-t-2 px-0.5 py-1.5 text-center ${isOver ? 'border-amber-600' : 'border-transparent'
+                          }`}
+                      >
                         <button
                           onClick={() => onToggleCell(h.id, k)}
-                          className={`h-5 w-5 border ${
-                            checked ? 'border-amber-600 bg-amber-600' : 'border-stone-300'
-                          }`}
+                          className={`h-5 w-5 border ${checked ? 'border-amber-600 bg-amber-600' : 'border-stone-300'
+                            }`}
                         />
                       </td>
                     );
                   })}
-                  <td className="pl-3 text-center text-sm text-stone-500">{streak || ''}</td>
+                  <td
+                    className={`border-t-2 pl-3 text-center text-sm text-stone-500 ${isOver ? 'border-amber-600' : 'border-transparent'
+                      }`}
+                  >
+                    {streak || ''}
+                  </td>
                 </tr>
               );
             })}

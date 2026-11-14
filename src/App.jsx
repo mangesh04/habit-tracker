@@ -140,6 +140,17 @@ export default function App() {
     });
   }
 
+  function reorderHabit(from, to) {
+    setHabits((prev) => {
+      const next = [...prev];
+      const [moved] = next.splice(from, 1);
+      next.splice(to, 0, moved);
+      saveHabits(next);
+      return next;
+    });
+  }
+
+
   // ---- shortcuts ----
   function addShortcut(name, url) {
     setShortcuts((prev) => {
@@ -178,6 +189,15 @@ export default function App() {
       ...prev,
       [listName]: prev[listName].filter((t) => t.id !== id),
     }));
+  }
+
+  function reorderListItem(listName, from, to) {
+    updateLists((prev) => {
+      const arr = [...prev[listName]];
+      const [moved] = arr.splice(from, 1);
+      arr.splice(to, 0, moved);
+      return { ...prev, [listName]: arr };
+    });
   }
 
   if (!log || !habits || !lists || !shortcuts || !bests) {
@@ -227,6 +247,7 @@ export default function App() {
           onToggleCell={toggleCell}
           onAddHabit={addHabit}
           onRemoveHabit={removeHabit}
+          onReorderHabit={reorderHabit}
         />
 
         <Lists
@@ -234,6 +255,7 @@ export default function App() {
           lists={lists}
           onAdd={addListItem}
           onRemove={removeListItem}
+          onReorder={reorderListItem}
         />
 
         <Lists
@@ -241,6 +263,7 @@ export default function App() {
           lists={lists}
           onAdd={addListItem}
           onRemove={removeListItem}
+          onReorder={reorderListItem}
         />
       </div>
     </div >

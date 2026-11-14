@@ -1,7 +1,25 @@
 import { useState } from 'react';
 
-function ListSection({ title, hint, items, checkable, placeholder, onAdd, onToggle, onRemove, onClearDone }) {
+function ListSection({
+  title,
+  hint,
+  items,
+  checkable,
+  placeholder,
+  onAdd,
+  onToggle,
+  onRemove,
+  onClearDone,
+  onReorder,
+}) {
   const [value, setValue] = useState('');
+  const [dragIndex, setDragIndex] = useState(null);
+  const [overIndex, setOverIndex] = useState(null);
+
+  function resetDrag() {
+    setDragIndex(null);
+    setOverIndex(null);
+  }
 
   function submit(e) {
     e.preventDefault();
@@ -25,14 +43,33 @@ function ListSection({ title, hint, items, checkable, placeholder, onAdd, onTogg
       <p className="mb-2 text-xs text-stone-400">{hint}</p>
 
       <ul className="space-y-0.5">
-        {items.map((item) => (
-          <li key={item.id} className="group flex items-center gap-3 py-1">
+        {items.map((item, index) => (
+          <li
+            key={item.id}
+            draggable
+            onDragStart={() => setDragIndex(index)}
+            onDragOver={(e) => {
+              e.preventDefault();
+              if (overIndex !== index) setOverIndex(index);
+            }}
+            onDrop={() => {
+              if (dragIndex !== null && dragIndex !== index) {
+                onReorder(dragIndex, index);
+              }
+              resetDrag();
+            }}
+            onDragEnd={resetDrag}
+            className={`group flex cursor-grab items-center gap-3 border-t-2 py-1 ${dragIndex === index ? 'opacity-40' : ''
+              } ${overIndex === index && dragIndex !== null && dragIndex !== index
+                ? 'border-amber-600'
+                : 'border-transparent'
+              }`}
+          >
             {checkable && (
               <button
                 onClick={() => onToggle(item.id)}
-                className={`flex h-5 w-5 shrink-0 items-center justify-center border ${
-                  item.done ? 'border-amber-600 bg-amber-600' : 'border-stone-400'
-                }`}
+                className={`flex h-5 w-5 shrink-0 items-center justify-center border ${item.done ? 'border-amber-600 bg-amber-600' : 'border-stone-400'
+                  }`}
               >
                 {item.done && (
                   <svg viewBox="0 0 12 12" className="h-3 w-3 fill-none stroke-white stroke-2">
@@ -41,11 +78,14 @@ function ListSection({ title, hint, items, checkable, placeholder, onAdd, onTogg
                 )}
               </button>
             )}
-            {!checkable && <span className="text-stone-400">·</span>}
+            {!checkable && (
+              <span className="w-5 shrink-0 text-right text-xs text-stone-400">
+                {index + 1}.
+              </span>
+            )}
             <span
-              className={`flex-1 text-sm ${
-                checkable && item.done ? 'text-stone-400 line-through' : 'text-stone-800'
-              }`}
+              className={`flex-1 text-sm ${checkable && item.done ? 'text-stone-400 line-through' : 'text-stone-800'
+                }`}
             >
               {item.text}
             </span>
@@ -81,7 +121,7 @@ function ListSection({ title, hint, items, checkable, placeholder, onAdd, onTogg
 
 // Two plain lists near the bottom of the page: "todo" then "ideas".
 // Both lists are permanent: they are not tied to any date.
-export default function Lists({ kind, lists, onAdd, onRemove }) {
+export default function Lists({ kind, lists, onAdd, onRemove, onReorder }) {
   if (kind === 'todo') {
     return (
       <div className="border-t border-stone-300 py-5">
@@ -92,6 +132,7 @@ export default function Lists({ kind, lists, onAdd, onRemove }) {
           placeholder="Add something to do"
           onAdd={(t) => onAdd('todo', t)}
           onRemove={(id) => onRemove('todo', id)}
+          onReorder={(from, to) => onReorder('todo', from, to)}
         />
       </div>
     );
@@ -106,6 +147,7 @@ export default function Lists({ kind, lists, onAdd, onRemove }) {
         placeholder="Add something you can do instead"
         onAdd={(t) => onAdd('ideas', t)}
         onRemove={(id) => onRemove('ideas', id)}
+        onReorder={(from, to) => onReorder('ideas', from, to)}
       />
     </div>
   );
